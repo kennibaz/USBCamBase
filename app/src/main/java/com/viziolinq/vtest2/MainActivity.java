@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Surface;
 import android.view.View;
 import android.widget.ImageButton;
@@ -50,10 +51,13 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
      */
     private static final int PREVIEW_MODE = 0; // YUV
     private UVCCameraHandler mCameraHandler;
+    private UVCCamera uvcCamera;
 
     private CameraViewInterface mUVCCameraView;
     private ImageButton mCameraButton;
     private USBMonitor mUSBMonitor;
+
+    private final Object mSync = new Object();
 
     private TextView resultTextView;
     private Timer timer = null;
@@ -69,8 +73,15 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
         mUVCCameraView = (CameraViewInterface)view;
         mUVCCameraView.setAspectRatio(PREVIEW_WIDTH / (double)PREVIEW_HEIGHT);
         mUSBMonitor = new USBMonitor(this, mOnDeviceConnectListener);
+        uvcCamera = new UVCCamera();
         mCameraHandler = UVCCameraHandler.createHandler(this, mUVCCameraView,
                 USE_SURFACE_ENCODER ? 0 : 1, PREVIEW_WIDTH, PREVIEW_HEIGHT, PREVIEW_MODE);
+    }
+
+    private void getUsbDev () {
+        UsbDevice usbDevice = mUSBMonitor.getDeviceList().get(0);
+        Log.i("WebCamTest", usbDevice.getDeviceName());
+        mUSBMonitor.requestPermission(usbDevice);
     }
 
     private final View.OnClickListener mOnClickListener = new View.OnClickListener() {
@@ -78,6 +89,8 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
         public void onClick(final View view) {
             if ((mCameraHandler != null) && !mCameraHandler.isOpened()) {
                 CameraDialog.showDialog(MainActivity.this);
+
+
             } else {
                 mCameraHandler.close();
             }
@@ -88,10 +101,13 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
         @Override
         public void onAttach(final UsbDevice device) {
             Toast.makeText(MainActivity.this, "USB_DEVICE_ATTACHED", Toast.LENGTH_SHORT).show();
+            getUsbDev();
+
         }
 
         @Override
         public void onConnect(final UsbDevice device, final USBMonitor.UsbControlBlock ctrlBlock, final boolean createNew) {
+            Log.i("WebCamTest", "onConnect ");
             if (mCameraHandler != null) {
                 mCameraHandler.open(ctrlBlock);
                 startPreview();
@@ -125,6 +141,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
     protected void onStart() {
         super.onStart();
         mUSBMonitor.register();
+
     }
 
     @Override
@@ -144,11 +161,13 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
 
     @Override
     public USBMonitor getUSBMonitor() {
+
         return mUSBMonitor;
     }
 
     @Override
     public void onDialogResult(boolean b) {
+        Log.i("WebCamTest", "Dalog");
 
     }
 
@@ -161,7 +180,7 @@ public class MainActivity extends BaseActivity implements CameraDialog.CameraDia
             }
         };
         timer = new Timer();
-        timer.scheduleAtFixedRate(task, 1000, 100);
+        timer.scheduleAtFixedRate(task, 100, 100);
     }
     private void stopDecoding(){
         if (timer != null){

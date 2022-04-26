@@ -8,8 +8,8 @@
 
     <com.serenegiant.widget.UVCCameraTextureView
         android:id="@+id/camera_view"
-        android:layout_width="407dp"
-        android:layout_height="720dp"
+        android:layout_width="720dp"
+        android:layout_height="1280dp"
         android:layout_centerInParent="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
